@@ -1,75 +1,66 @@
-DROP DATABASE IF EXISTS UVV_CC3M;
-CREATE DATABASE UVV_CC3M;
-USE UVV_CC3M;
+CREATE DATABASE SistemaFinanceiro;
+GO
 
--- ============================
--- TABELA: ClienteFornecedor
--- ============================
+USE SistemaFinanceiro;
+GO
+
+-- Tabela de ClienteFornecedor
 CREATE TABLE ClienteFornecedor (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT IDENTITY(1,1) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     cpf_cnpj VARCHAR(20) NOT NULL,
     endereco VARCHAR(150),
     telefone VARCHAR(20),
-    email VARCHAR(100),
-    INDEX idx_cpf_cnpj (cpf_cnpj)
+    email VARCHAR(100)
 );
+GO
 
--- ============================
--- TABELA: ContaBancaria
--- ============================
+-- Tabela de ContaBancaria
 CREATE TABLE ContaBancaria (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    banco VARCHAR(100) NOT NULL,
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    id_cliente_fornecedor INT NOT NULL,
+    banco VARCHAR(50) NOT NULL,
     agencia VARCHAR(20) NOT NULL,
     numero_conta VARCHAR(20) NOT NULL,
-    saldo DECIMAL(15,2) DEFAULT 0
+    saldo DECIMAL(15,2) NOT NULL DEFAULT 0,
+    FOREIGN KEY (id_cliente_fornecedor) REFERENCES ClienteFornecedor(id)
 );
+GO
 
--- ============================
--- TABELA: ContaPagar
--- ============================
-CREATE TABLE ContaPagar (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    fornecedor_id INT NOT NULL,
+-- Tabela de TransacaoFinanceira
+CREATE TABLE TransacaoFinanceira (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    id_conta_bancaria INT NOT NULL,
+    tipo VARCHAR(20) NOT NULL, -- 'entrada' ou 'saida'
     valor DECIMAL(15,2) NOT NULL,
-    data_vencimento DATE NOT NULL,
-    pago BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (fornecedor_id) REFERENCES ClienteFornecedor(id)
+    data_transacao DATE NOT NULL,
+    descricao VARCHAR(200),
+    FOREIGN KEY (id_conta_bancaria) REFERENCES ContaBancaria(id)
 );
+GO
 
--- ============================
--- TABELA: ContaReceber
--- ============================
-CREATE TABLE ContaReceber (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cliente_id INT NOT NULL,
-    valor DECIMAL(15,2) NOT NULL,
-    data_vencimento DATE NOT NULL,
-    recebido BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (cliente_id) REFERENCES ClienteFornecedor(id)
-);
 
--- ============================
--- DADOS DE TESTE
--- ============================
+CREATE INDEX idx_cpf_cnpj ON ClienteFornecedor(cpf_cnpj);
+CREATE INDEX idx_numero_conta ON ContaBancaria(numero_conta);
+CREATE INDEX idx_data_transacao ON TransacaoFinanceira(data_transacao);
+GO
 
--- Inserir clientes/fornecedores
-INSERT INTO ClienteFornecedor (nome, cpf_cnpj, endereco, telefone, email) VALUES
-('João Silva', '12345678901', 'Rua A, 100', '11999999999', 'joao@email.com'),
-('Empresa XYZ', '11222333444455', 'Av. Central, 500', '1122223333', 'contato@xyz.com');
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'SistemaFinanceiro')
+    CREATE DATABASE SistemaFinanceiro;
+GO
 
--- Inserir contas bancárias
-INSERT INTO ContaBancaria (banco, agencia, numero_conta, saldo) VALUES
-('Banco do Brasil', '1234', '56789-0', 1500.00),
-('Caixa Econômica', '5678', '12345-6', 5000.00);
+USE SistemaFinanceiro;
+GO
 
--- Inserir contas a pagar
-INSERT INTO ContaPagar (fornecedor_id, valor, data_vencimento, pago) VALUES
-(2, 1000.00, '2025-08-20', FALSE),
-(2, 500.00, '2025-09-10', TRUE);
-
--- Inserir contas a receber
-INSERT INTO ContaReceber (cliente_id, valor, data_vencimento, recebido) VALUES
-(1, 2000.00, '2025-08-25', FALSE),
-(1, 750.00, '2025-09-05', TRUE);
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ClienteFornecedor')
+BEGIN
+    CREATE TABLE ClienteFornecedor (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        cpf_cnpj VARCHAR(20) NOT NULL,
+        endereco VARCHAR(150),
+        telefone VARCHAR(20),
+        email VARCHAR(100)
+    );
+END
+GO
